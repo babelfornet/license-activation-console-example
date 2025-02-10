@@ -1,17 +1,56 @@
 ﻿
 using Babel.Licensing;
 
+// HTTP client endpoint
+string httpEndpoint = "https://localhost:5455";
+
+// GRPC client endpoint (Change to use GRPC)
+string grpcEndpoint = "http://localhost:5005";
+
 // Create a new configuration object
 BabelLicensingConfiguration config = new BabelLicensingConfiguration() {
     // Set the service URL
-    ServiceUrl = "http://localhost:5005",
-
+    ServiceUrl = grpcEndpoint,
+    // Set the client ID (application name)
+    ClientId = "ConsoleApp",    
     // Set the public key used to verify the license signature
     SignatureProvider = RSASignature.FromKeys("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDE1VRiIdr6fiVZKve7NVgjIvGdRiRx0Mjjm+Yzf6tLbzFnxLs0fat5EoRcubxx0QQQDfydsJBE/fc7cwRWSrE2xK6X4Eb4W8O47pCMjqvTQZfDqQywEZJrLlxpp9hlKz6FDYX4SagrjmP1gdw8olo+n+IBz8ubkNxRhvycikxuDQIDAQAB")    
 };
 
+// To use HTTP instead of GRPC, uncomment the following lines
+// and use the httpEndpoint variable in the ServiceUrl property
+
+// config.UseHttp(http => {
+//     http.Timeout = TimeSpan.FromSeconds(3);
+//     http.Handler = new HttpClientHandler() {
+//         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+//     };
+// });
+
 // Create the client object used to communicate with the server
 BabelLicensing client = new BabelLicensing(config);
+
+client.LicenseActivationError += (sender, e) => {
+    Console.WriteLine($"Online activation error: {e.Error}");
+
+    if (!string.IsNullOrEmpty(e.UserKey)) 
+    {
+        // Handle license offline activation
+        Console.WriteLine("Please provide the following information to support for offline activation:");
+        Console.WriteLine();
+
+        var configurartion = client.Configuration;
+
+        Console.WriteLine("User Key: " + e.UserKey);
+        Console.WriteLine("Machine ID: " + configurartion.MachineId);
+        Console.WriteLine("PC Name: " + configurartion.ClientName);
+        Console.WriteLine("Application Name: " + configurartion.ClientId);
+
+        Console.WriteLine();
+        Console.WriteLine("Enter the license key provided by support:");
+        e.OfflineActivationKey = Console.ReadLine();
+    } 
+};
 
 // Use BabelServiceLicenseProvider to cache a local copy of the license for offline use
 BabelServiceLicenseProvider provider = new BabelServiceLicenseProvider(client) {

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Babel.Licensing" Version="10.9.0" />
+    <PackageReference Include="Babel.Licensing" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
